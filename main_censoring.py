@@ -44,21 +44,21 @@ def prOneH(c,alpha):
     p = 1 - pow(1-c,1/n) #the probability of being a slot leader for a validator
     return roundtwo(alpha * n * p * pow(1-p, n-1))
 
-def aura_prob_empty_block(stake):
-    return stake
+def aura_prob_honest_block(stake):
+    return 1-stake
 
-def babe_prob_empty_block(stake):
-    return (1-prh(c, 1-stake))
+def babe_prob_honest_block(stake):
+    return prH(c, 1-stake)
 
-def babe_plus_aura_prob_empty_block(stake):
-    prob_no_single_honest_collator = babe_prob_empty_block(stake)
-    prob_no_single_honest_collator = aura_prob_empty_block(stake)
-    return prob_no_single_honest_collator*prob_no_single_honest_collator
+def babe_plus_aura_prob_only_honest_collator(stake):
+    probability_babe_only_honest_collator = babe_prob_honest_block(stake)
+    probability_aura_only_honest_collator = aura_prob_honest_block(stake)
+    return probability_babe_only_honest_collator + (1-c)*probability_aura_only_honest_collator
 
 algo_switcher = {
-        'aura': aura_prob_empty_block,  
-        'babe': babe_prob_empty_block,
-        'babe+aura': babe_plus_aura_prob_empty_block
+        'aura': aura_prob_honest_block,
+        'babe': babe_prob_honest_block,
+        'babe+aura': babe_plus_aura_prob_only_honest_collator
 }
 
 parser = argparse.ArgumentParser(description='Calculate stake probability')
@@ -90,7 +90,7 @@ for i, stall_percentage in enumerate(stall_steps):
 
 labels = []
 for stall in stall_steps:
-    labels.append(str("%.2f" % (stall*100)) +  ('% of blocks stalled'))
+    labels.append(str("%.2f" % (stall*100)) +  ('% of blocks proposed by honest actors'))
 
 for y_arr, label in zip(results, labels):
     plt.plot(steps, y_arr, label=label)
